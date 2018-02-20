@@ -1,4 +1,4 @@
-module Main where
+module Everything where
 import Control.Monad
 import Control.Monad.State
 import Data.Random
@@ -7,8 +7,8 @@ import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core hiding (get)
 import System.Random
 
-main :: IO ()
-main = startGUI defaultConfig setup
+start :: IO ()
+start = startGUI defaultConfig setup
 
 setup :: Window -> UI ()
 setup w = void $ do
@@ -43,7 +43,6 @@ pick list = do
 sumOfGeoSeries :: UI String
 sumOfGeoSeries = do
   gen <- liftIO newStdGen
-  --let (n, a, r) = evalState genThreeRandom gen
   let [I n, I a, D r] = genRandomNums [((1, 10), I), ((0, 25), I), ((1, 500), (\x -> D $ fromIntegral x/100))] gen
   return ("Find the sum of the first " ++ show n ++ " numbers in the geometric series if a1 = " ++ show a ++ " and r = " ++ show r)
 
@@ -66,4 +65,3 @@ genRandom range = do
   let (a, g) = randomR range gen
   put g
   return a
-  
