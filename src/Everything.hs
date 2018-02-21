@@ -32,25 +32,28 @@ nextBtn = do
   return [output, view]
 
 getNext :: UI String
-getNext = pick [sumOfGeoSeries, sumOfInfiniteGeoSeries]
-
-pick :: [UI String] -> UI String
-pick list = do
+getNext = do
   gen <- liftIO newStdGen
-  let [I n] = genRandomNums [((0, length list - 1), I)] gen
-  list !! n
+  let (output, newGen) = pick [sumOfGeoSeries, sumOfInfiniteGeoSeries] gen
+  return $ output newGen
 
-sumOfGeoSeries :: UI String
-sumOfGeoSeries = do
-  gen <- liftIO newStdGen
-  let [I n, I a, D r] = genRandomNums [((1, 10), I), ((0, 25), I), ((1, 500), (\x -> D $ fromIntegral x/100))] gen
-  return ("Find the sum of the first " ++ show n ++ " numbers in the geometric series if a1 = " ++ show a ++ " and r = " ++ show r)
+type Output = StdGen -> [Char]
 
-sumOfInfiniteGeoSeries :: UI String
-sumOfInfiniteGeoSeries = do
-  gen <- liftIO newStdGen
-  let [I a, D r] = genRandomNums [((1, 25), I), ((-9, 9), (\x -> D $ fromIntegral x/10))] gen
-  return ("Find the sum of the infinite geometric series if a1 = " ++ show a ++ " and r = " ++ show r)
+pick :: [Output] -> StdGen -> (Output, StdGen)
+pick list gen = (list !! n, g)
+  where
+    --[I n] = genRandomNums [((0, length list - 1), I)] gen
+    (n, g) = runState (genRandom (0, length list - 1)) gen
+
+sumOfGeoSeries :: Output
+sumOfGeoSeries gen = "Find the sum of the first " ++ show n ++ " numbers in the geometric series if a1 = " ++ show a ++ " and r = " ++ show r
+  where
+    [I n, I a, D r] = genRandomNums [((1, 10), I), ((0, 25), I), ((1, 500), (\x -> D $ fromIntegral x/100))] gen
+
+sumOfInfiniteGeoSeries :: Output
+sumOfInfiniteGeoSeries gen = "Find the sum of the infinite geometric series if a1 = " ++ show a ++ " and r = " ++ show r
+  where
+    [I a, D r] = genRandomNums [((1, 25), I), ((-9, 9), (\x -> D $ fromIntegral x/10))] gen
 
 data Number = I Int | D Double deriving Show
 
