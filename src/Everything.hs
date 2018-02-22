@@ -47,14 +47,11 @@ sumOfGeoSeries = do
   r <- genRandomDecR (1, 500) (/100)
   return $ "Find the sum of the first " ++ show n ++ " numbers in the geometric series if a1 = " ++ show a ++ " and r = " ++ show r
 
-  --"Find the sum of the first " ++ show n ++ " numbers in the geometric series if a1 = " ++ show a ++ " and r = " ++ show r
 sumOfInfiniteGeoSeries :: Rand String
 sumOfInfiniteGeoSeries = do
   a <- genRandomR (1, 25)
   r <- genRandomDecR (-9, 9) (/10)
   return $ "Find the sum of the infinite geometric series if a1 = " ++ show a ++ " and r = " ++ show r
-  --"Find the sum of the infinite geometric series if a1 = " ++ show a ++ " and r = " ++ show r
-  --where
 
 genRandomDecR :: (Int, Int) -> (Double -> Double) -> Rand Double
 genRandomDecR range f = do
