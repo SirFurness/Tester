@@ -1,8 +1,6 @@
 module Everything where
 import Control.Monad
 import Control.Monad.State
-import Data.Random
-import Data.Random.Extras
 import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core hiding (get)
 import System.Random
@@ -25,45 +23,46 @@ nextBtn = do
   output <- UI.p #+ [string "Press Next"]
 
   on UI.click btn $ \_ -> do
-    str <- getNext
+    gen <- liftIO newStdGen
+    let str = evalState getNext gen
     newOutput <- UI.p #+ [string str]
     element output # set children [newOutput]
 
   return [output, view]
 
-getNext :: UI String
-getNext = do
-  gen <- liftIO newStdGen
-  let (output, newGen) = pick [sumOfGeoSeries, sumOfInfiniteGeoSeries] gen
-  return $ output newGen
+type Rand a = State StdGen a
 
-type Output = StdGen -> [Char]
+getNext :: Rand String
+getNext = pick [sumOfGeoSeries, sumOfInfiniteGeoSeries]
 
-pick :: [Output] -> StdGen -> (Output, StdGen)
-pick list gen = (list !! n, g)
-  where
-    --[I n] = genRandomNums [((0, length list - 1), I)] gen
-    (n, g) = runState (genRandom (0, length list - 1)) gen
+pick :: [Rand String] -> Rand String
+pick list = do
+  n <- genRandomR (0, length list - 1)
+  list !! n
 
-sumOfGeoSeries :: Output
-sumOfGeoSeries gen = "Find the sum of the first " ++ show n ++ " numbers in the geometric series if a1 = " ++ show a ++ " and r = " ++ show r
-  where
-    [I n, I a, D r] = genRandomNums [((1, 10), I), ((0, 25), I), ((1, 500), (\x -> D $ fromIntegral x/100))] gen
+sumOfGeoSeries :: Rand String
+sumOfGeoSeries = do
+  n <- genRandomR (1, 10)
+  a <- genRandomR (0, 25)
+  r <- genRandomDecR (1, 500) (/100)
+  return $ "Find the sum of the first " ++ show n ++ " numbers in the geometric series if a1 = " ++ show a ++ " and r = " ++ show r
 
-sumOfInfiniteGeoSeries :: Output
-sumOfInfiniteGeoSeries gen = "Find the sum of the infinite geometric series if a1 = " ++ show a ++ " and r = " ++ show r
-  where
-    [I a, D r] = genRandomNums [((1, 25), I), ((-9, 9), (\x -> D $ fromIntegral x/10))] gen
+  --"Find the sum of the first " ++ show n ++ " numbers in the geometric series if a1 = " ++ show a ++ " and r = " ++ show r
+sumOfInfiniteGeoSeries :: Rand String
+sumOfInfiniteGeoSeries = do
+  a <- genRandomR (1, 25)
+  r <- genRandomDecR (-9, 9) (/10)
+  return $ "Find the sum of the infinite geometric series if a1 = " ++ show a ++ " and r = " ++ show r
+  --"Find the sum of the infinite geometric series if a1 = " ++ show a ++ " and r = " ++ show r
+  --where
 
-data Number = I Int | D Double deriving Show
+genRandomDecR :: (Int, Int) -> (Double -> Double) -> Rand Double
+genRandomDecR range f = do
+  n <- genRandomR range
+  return $ f $ fromIntegral n
 
-genRandomNums :: [((Int, Int), (Int -> Number))] -> StdGen -> [Number]
-genRandomNums list = evalState (mapM (\(range, f) -> do
-                                     n <- genRandom range
-                                     return $ f n) list)
-
-genRandom :: (Random a) => (a, a) -> State StdGen a
-genRandom range = do
+genRandomR :: (Int, Int) -> Rand Int
+genRandomR range = do
   gen <- get
   let (a, g) = randomR range gen
   put g
